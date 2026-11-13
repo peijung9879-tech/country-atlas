@@ -84,6 +84,7 @@ input[type=search]{font:inherit;width:100%;padding:9px 12px;border:1px solid var
 .field input,.field textarea{font:inherit;font-size:15px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;width:100%}
 .field textarea.short{min-height:64px}
 .ally{display:inline-block;margin-left:6px;padding:0 8px;border-radius:999px;background:var(--ink-soft);color:var(--ink);font-size:12px;font-weight:700}
+.field textarea.grow{overflow:hidden;resize:none}
 .field textarea{min-height:110px;resize:vertical;line-height:1.6}
 .btn.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 .chip.has-note .go::after{content:"✎";margin-left:4px;color:var(--ink);font-size:12px}
@@ -190,10 +191,10 @@ input[type=search]{font:inherit;width:100%;padding:9px 12px;border:1px solid var
           <input id="noteWhen" type="text" placeholder="例如：2026/11/13 桌曆" maxlength="60" autocomplete="off">
         </label>
         <label class="field"><span>與台灣的關係 <span class="ally" id="allyBadge" hidden>邦交國</span></span>
-          <textarea id="noteRel" class="short" placeholder="例如：1989 年建交、每年在國際組織替台灣發聲、台灣進口它的蝦子" maxlength="2000"></textarea>
+          <textarea id="noteRel" class="short grow" placeholder="例如：1989 年建交、每年在國際組織替台灣發聲、台灣進口它的蝦子" maxlength="2000"></textarea>
         </label>
         <label class="field">備註
-          <textarea id="noteText" placeholder="首都、語言、歷史、有趣的小知識……" maxlength="4000"></textarea>
+          <textarea id="noteText" class="grow" placeholder="首都、語言、歷史、有趣的小知識……" maxlength="4000"></textarea>
         </label>
         <span class="saved" id="noteSaved">打字會自動儲存</span>
       </div>
@@ -360,7 +361,9 @@ function renderFh(){
   const d=document.createElement('small');d.textContent='政治權利 '+f[2]+'/40 · 公民自由 '+f[3]+'/60 · 自由之家 2026';
   fhBox.append(lab,b,st,d);
 }
-function renderNoteFields(){ const n=notes[sel]||{}; noteWhen.value=n.d||''; noteRel.value=n.r||''; noteText.value=n.t||''; allyBadge.hidden=!ALLIES.has(sel); }
+function fit(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+2)+'px'; }
+function fitAll(){ fit(noteRel); fit(noteText); }
+function renderNoteFields(){ const n=notes[sel]||{}; noteWhen.value=n.d||''; noteRel.value=n.r||''; noteText.value=n.t||''; allyBadge.hidden=!ALLIES.has(sel); fitAll(); }
 function select(k){ sel=k; noteEmpty.hidden=true; noteBody.hidden=false; renderNoteHead(); renderNoteFields(); renderFh(); noteSaved.textContent='打字會自動儲存'; }
 noteToggle.onclick=()=>{ if(sel) toggle(sel); };
 function setEditable(on){ CAN_EDIT=on; [noteWhen,noteRel,noteText].forEach(el=>el.readOnly=!on); noteToggle.hidden=!on; document.getElementById('importBtn').hidden=!on; noteSaved.hidden=!on; renderSide(); }
@@ -372,7 +375,8 @@ function onNoteInput(){
   clearTimeout(chipT); chipT=setTimeout(renderSide,800);
 }
 let chipT=null;
-noteWhen.addEventListener('input',onNoteInput); noteRel.addEventListener('input',onNoteInput); noteText.addEventListener('input',onNoteInput);
+noteWhen.addEventListener('input',onNoteInput); noteRel.addEventListener('input',onNoteInput); noteRel.addEventListener('input',()=>fit(noteRel)); noteText.addEventListener('input',()=>fit(noteText));
+let fitT=null; window.addEventListener('resize',()=>{ clearTimeout(fitT); fitT=setTimeout(()=>{ if(sel) fitAll(); },150); }); noteText.addEventListener('input',onNoteInput);
 const mMine=document.getElementById('mMine'), mFh=document.getElementById('mFh'), legend=document.getElementById('legend'), fhSrc=document.getElementById('fhSrc');
 function setMode(m){ const fh=m==='fh'; box.classList.toggle('mode-fh',fh); mMine.setAttribute('aria-pressed',!fh); mFh.setAttribute('aria-pressed',fh); legend.hidden=!fh; fhSrc.hidden=!fh; try{localStorage.setItem(KEY+'-mode',m)}catch(e){} }
 mMine.onclick=()=>setMode('mine'); mFh.onclick=()=>setMode('fh');
